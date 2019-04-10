@@ -26,7 +26,11 @@ Nave::Nave() {
 
 void Nave::rotar(Direccion direccion) {
 
-	float rotacion = velocidadAngular;
+	float rotacion = velocidadAngular * tiempoDiferencial;
+	if (rotacion < 0)
+	{
+		rotacion += 360;
+	}
 	if (direccion == Direccion::Derecha) {
 		rotacion = -rotacion;
 	}
@@ -37,14 +41,72 @@ void Nave::rotar(Direccion direccion) {
 void Nave::avanzar() {
 	float anguloDesfasado = angulo + 90.0f;
 
+	if (velocidadActual <= velocidadMaxima) {
+		velocidadActual += aceleracion;
+	}
+	else
+	{
+		velocidadActual = velocidadMaxima;
+	}
+
 	vec3 traslacion = vec3(
-		cos(anguloDesfasado * 3.14159 / 180.0f) * velocidad, // X
-		sin(anguloDesfasado * 3.14159 / 180.0f) * velocidad, // Y
+		cos(anguloDesfasado * 3.14159 / 180.0f) * velocidadActual * tiempoDiferencial, // X
+		sin(anguloDesfasado * 3.14159 / 180.0f) * velocidadActual * tiempoDiferencial, // Y
 		0.0f
 	);
 
 	coordenadas += traslacion;
 	actualizarMatrizTransformacion();
+}
+
+void Nave::frenar() {
+	float anguloDesfasado = angulo + 90.0f;
+
+	if (velocidadActual > 0)
+	{
+		velocidadActual -= desaceleracion;
+		if (velocidadActual < 0)
+		{
+			velocidadActual = 0.0f;
+		}
+	}
+
+	vec3 traslacion = vec3(
+		cos(anguloDesfasado * 3.14159 / 180.0f) * velocidadActual * tiempoDiferencial, // X
+		sin(anguloDesfasado * 3.14159 / 180.0f) * velocidadActual * tiempoDiferencial, // Y
+		0.0f
+	);
+
+	coordenadas += traslacion;
+	actualizarMatrizTransformacion();
+}
+
+void Nave::calcularTiempo() {
+	tiempoActual = glfwGetTime();
+	tiempoDiferencial = tiempoActual - tiempoAnterior;
+}
+
+void Nave::colisionPared() {
+	
+	if (coordenadas.x > 1.1f)
+	{
+		coordenadas.x = -1.0f;
+	}
+
+	if (coordenadas.x < -1.1f)
+	{
+		coordenadas.x = 1.00f;
+	}
+
+	if (coordenadas.y > 1.1f)
+	{
+		coordenadas.y = -1.00f;
+	}
+	
+	if (coordenadas.y < -1.1f)
+	{
+		coordenadas.y = 1.00f;
+	}
 }
 
 void Nave::actualizarMatrizTransformacion() {
